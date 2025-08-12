@@ -5,10 +5,12 @@ const path=require("path")
 const mysql=require("mysql2")
 const bcrypt=require("bcrypt")
 const jwt = require("jsonwebtoken");
+const cookieParser=require("cookie-parser")
 app.set("view engine","ejs")
 app.use(express.static(path.join(__dirname, "../public")));
 app.use(express.urlencoded({extended:true}))
 app.use(express.json());
+app.use(cookieParser())
 const JWT_SECRET="this is secret"
 const JWT_EXPIRES="1h"
 const logos = {
@@ -32,6 +34,23 @@ db.connect((err)=>{
     }
     console.log("Database connected")
 })
+function checkAuth(req, res, next) {
+  const token = req.cookies.token;
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      req.user = null;
+    } else {
+      req.user = user; 
+    }
+    next();
+  });
+}
+
 
 app.get("/register",(req,res)=>{
     return res.render("register")
@@ -59,9 +78,9 @@ app.post("/login",async(req,res)=>{
         }
         const token=jwt.sign({id:user.id,email:user.email},JWT_SECRET,{expiresIn:JWT_EXPIRES})
         res.cookie("token", token, {
-  httpOnly: true, // Can't be accessed via JS
-  secure: true,   // Only over HTTPS
-  maxAge: 3600000 // 1 hour
+        httpOnly: true, // Can't be accessed via JS
+        secure: true,   // Only over HTTPS
+         maxAge: 3600000 // 1 hour
 });
 res.json({ message: "Login successful" });
 
@@ -85,12 +104,13 @@ app.post("/register",async(req,res)=>{
 
 })
 
-app.get("/",async(req,res)=>{
+app.get("/",checkAuth,async(req,res)=>{
     const response=await fetch("https://competeapi.vercel.app/contests/upcoming/");
     let contests=await response.json()
     contests=contests.map((c)=>{
         return{ ...c,
-        logo:logos[c.site]
+        logo:logos[c.site],
+        user:req.user
     }
         
     })

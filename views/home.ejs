@@ -30,9 +30,11 @@
           <%= hours %>h <%= minutes %>m
         </p>
         <p class="text-muted">End: <%= new Date(contest.endTime).toLocaleString() %></p>
-        <% if(isUser){ %>
+        <% if(contest.user){ %>
           <a href="<%= contest.url %>" target="_blank" class="btn btn-primary mt-auto">Go to Contest</a>
-          <% } %>
+          <% } else{ %>
+              <p class="text-muted">Login to view contest link</p>
+            <% } %>
         
       </div>
     </div>
