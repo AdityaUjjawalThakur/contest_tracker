@@ -1,0 +1,19 @@
+{
+  "name": "codingcontest",
+  "version": "1.0.0",
+  "description": "track coding contest across multiple platform",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Aditya ujjawal Thakur",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.14.3",
+    "path": "^0.12.7"
+  }
+}
