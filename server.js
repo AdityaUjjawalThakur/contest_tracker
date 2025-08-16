@@ -453,7 +453,7 @@ app.post("/verify/otp", checkAuth, async (req, res) => {
         // Step 3: Delete the OTP from the database
         await db.query("DELETE FROM email_otps WHERE email = ?", [req.user.email]);
         
-        return res.json({ msg: "Email verified successfully!" });
+        return res.redirect("/dashboard");
 
     } catch (err) {
         console.error("OTP verification error:", err);
