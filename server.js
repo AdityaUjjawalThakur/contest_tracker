@@ -35,14 +35,30 @@ mailer.verify((error, success) => {
         console.log("SMTP Server is ready to send emails!");
     }
 });
+// async function sendEmail(to, subject, text) {
+//   return mailer.sendMail({
+//     from: process.env.FROM_EMAIL,
+//     to,
+//     subject,
+//     text
+//   });
+// }
 async function sendEmail(to, subject, text) {
-  return mailer.sendMail({
-    from: process.env.FROM_EMAIL,
-    to,
-    subject,
-    text
-  });
+  try {
+    const info = await mailer.sendMail({
+      from: process.env.FROM_EMAIL,
+      to,
+      subject,
+      text
+    });
+    console.log(`Email sent to ${to}: ${info.response}`);
+    return info;
+  } catch (err) {
+    console.error(`Failed to send email to ${to}:`, err);
+    throw err; // rethrow to handle in route
+  }
 }
+
 // cron.schedule("* * * * *",()=>{
 //     const sql="select r.* ,u.email as user_email from reminders  r join users u on u.id=r.user_id where r.sent=0 and r.reminder_time<=NOW() "
 //      db.query(sql,async(err,rows)=>{
@@ -72,7 +88,7 @@ cron.schedule("* * * * *", async () => {
     const sql = "select r.* ,u.email as user_email from reminders r join users u on u.id=r.user_id where r.sent=0 and r.reminder_time <= CONVERT_TZ(NOW(), '+00:00', '+05:30')";
     try {
         const [rows] = await db.query(sql); // Use async/await to get the rows
-        console.log("Current IST time according to DB:", rows[0].current_ist_time);
+       
         console.log("Reminders fetched:", rows.length);
         for (const r of rows) {
             const msg = r.custom_message || `Reminder: "${r.contest_title}" is starting soon!\n${r.contest_url}`;
