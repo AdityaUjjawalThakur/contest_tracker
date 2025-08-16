@@ -436,7 +436,7 @@ app.post("/verify/otp", checkAuth, async (req, res) => {
     try {
         // Step 1: Query for the OTP
         const [result] = await db.query(
-            "SELECT * FROM email_otps WHERE email=? AND otp=? AND expires_at > NOW()",
+            "SELECT * FROM email_otps WHERE email=? AND otp=? AND expires_at >CONVERT_TZ(NOW(), '+00:00', '+05:30')",
             [req.user.email, otp]
         );
 
