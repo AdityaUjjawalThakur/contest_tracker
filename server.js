@@ -282,22 +282,34 @@ app.post('/logout', (req, res) => {
 });
 
 
-app.get("/",checkAuth,async(req,res)=>{
-    const response=await fetch("https://competeapi.vercel.app/contests/upcoming/");
-    let contests=await response.json()
-    console.log(contests)
-    contests=contests.map((c)=>{
-        return{ ...c,
-        logo:logos[c.site],
-        user:req.user
+app.get("/", checkAuth, async (req, res) => {
+    try {
+        const response = await fetch("https://competeapi.vercel.app/contests/upcoming/");
+        const text = await response.text(); // get raw response first
+        let contests;
+
+        try {
+            contests = JSON.parse(text); // try to parse JSON
+        } catch (err) {
+            console.error("Failed to parse JSON from API:", text);
+            contests = []; // fallback to empty array
+        }
+
+        // map contests if available
+        contests = (contests || []).map((c) => ({
+            ...c,
+            logo: logos[c.site],
+            user: req.user
+        }));
+
+        return res.render("home", { contests, user: req.user });
+
+    } catch (err) {
+        console.error("Error fetching contests:", err);
+        return res.render("home", { contests: [], user: req.user });
     }
-        
-    })
-    
-    
-    
-    return res.render("home",{contests,user:req.user})
-})
+});
+
 // app.post("/setreminder", checkAuth,async(req,res)=>{
 //     const {contestUrl,reminderTime,contestTitle,custoMessage}=req.body;
 //     console.log(req.user.id)
@@ -434,9 +446,9 @@ app.post("/verify/otp", checkAuth, async (req, res) => {
     const { otp } = req.body;
 
     try {
-        // Step 1: Query for the OTP
+     
         const [result] = await db.query(
-            "SELECT * FROM email_otps WHERE email=? AND otp=? AND expires_at >CONVERT_TZ(NOW(), '+00:00', '+05:30')",
+            "SELECT * FROM email_otps WHERE email=? AND otp=? AND expires_at > NOW()",
             [req.user.email, otp]
         );
 
@@ -444,13 +456,13 @@ app.post("/verify/otp", checkAuth, async (req, res) => {
             return res.status(400).json({ msg: "Invalid or expired OTP" });
         }
 
-        // Step 2: Update the user's verification status
+        
         await db.query(
             "UPDATE users SET is_verified = 1 WHERE email = ?",
             [req.user.email]
         );
 
-        // Step 3: Delete the OTP from the database
+     
         await db.query("DELETE FROM email_otps WHERE email = ?", [req.user.email]);
         
         return res.redirect("/dashboard");
